@@ -1,0 +1,11 @@
+# Core dependencies
+torch>=2.0.0
+torchaudio>=2.0.0
+numpy>=1.21.0
+
+# Optional: Audio quality metrics
+# pystoi>=0.3.0  # For STOI metric
+# pesq>=0.0.4    # For PESQ metric
+
+# Optional: Voice cloning
+# phonemizer>=3.0.0  # Text-to-phoneme conversion

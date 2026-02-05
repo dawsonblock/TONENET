@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tonenet"
+version = "2.0.0"
+description = "Production-grade neural audio codec with harmonic modeling and voice cloning"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Dawson Block"}
+]
+keywords = [
+    "audio", "codec", "neural-network", "vq-vae", "speech",
+    "harmonic", "voice-cloning", "pytorch", "deep-learning"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "torchaudio>=2.0.0",
+    "numpy>=1.21.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+metrics = [
+    "pystoi>=0.3.0",
+    "pesq>=0.0.4",
+]
+full = [
+    "pystoi>=0.3.0",
+    "pesq>=0.0.4",
+    "phonemizer>=3.0.0",
+]
+
+[project.urls]
+Repository = "https://github.com/dawsonblock/tonenet"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tonenet*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
