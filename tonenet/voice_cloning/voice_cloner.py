@@ -13,7 +13,8 @@ from typing import Dict, Tuple, Optional
 try:
     import torchaudio
     HAS_TORCHAUDIO = True
-except ImportError:
+except (ImportError, OSError):
+    torchaudio = None
     HAS_TORCHAUDIO = False
 
 from ..codec import ToneNetCodec

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tonenet"
 version = "2.0.0"
-description = "Production-grade neural audio codec with harmonic modeling and voice cloning"
+description = "Research-grade neural audio codec with harmonic synthesis and RVQ"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}

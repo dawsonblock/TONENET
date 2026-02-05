@@ -16,7 +16,8 @@ import numpy as np
 try:
     import torchaudio
     HAS_TORCHAUDIO = True
-except ImportError:
+except (ImportError, OSError):
+    torchaudio = None
     HAS_TORCHAUDIO = False
 
 import torch

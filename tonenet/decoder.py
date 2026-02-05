@@ -32,7 +32,17 @@ class HarmonicDecoder(nn.Module):
         self.num_harmonics = num_harmonics
         self.sample_rate = sample_rate
         self.frame_rate = frame_rate
+        
+        # Validate frame rate produces integer hop_length
+        if sample_rate % frame_rate != 0:
+            raise ValueError(f"sample_rate ({sample_rate}) must be divisible by frame_rate ({frame_rate})")
+        
         self.hop_length = sample_rate // frame_rate
+        
+        # Sanity check for expected configuration
+        if sample_rate == 24000 and frame_rate == 75:
+            assert self.hop_length == 320, f"Expected hop_length=320, got {self.hop_length}"
+        
         self.hidden_dim = hidden_dim
 
         # Temporal modeling

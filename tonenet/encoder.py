@@ -65,41 +65,63 @@ class ResidualBlock(nn.Module):
 class ToneNetEncoder(nn.Module):
     """
     Causal encoder for streaming audio.
-    Produces latent representations at reduced frame rate.
+    Produces latent representations at 75 Hz frame rate (hop_length=320).
     """
 
     def __init__(
         self,
         in_channels: int = 1,
         channels: List[int] = None,
+        strides: List[int] = None,
         latent_dim: int = 256,
         sample_rate: int = 24000,
         hop_length: int = 320  # 75 Hz frame rate at 24kHz
     ):
         super().__init__()
+        
+        # Default channel progression: 5 stages for 4 downsample ops
         if channels is None:
-            channels = [32, 64, 128, 256]
+            channels = [32, 64, 128, 256, 384]
+        
+        # Default strides: 5 * 4 * 4 * 4 = 320
+        if strides is None:
+            strides = [5, 4, 4, 4]
+        
+        # Validate: strides must multiply to hop_length
+        from math import prod
+        actual_hop = prod(strides)
+        if actual_hop != hop_length:
+            raise ValueError(
+                f"Encoder strides must multiply to hop_length={hop_length}, "
+                f"got prod({strides})={actual_hop}"
+            )
+        
+        # Validate: channels length = strides length + 1
+        if len(channels) != len(strides) + 1:
+            raise ValueError(
+                f"channels ({len(channels)}) must be len(strides)+1 ({len(strides)+1})"
+            )
 
         self.sample_rate = sample_rate
         self.hop_length = hop_length
         self.frame_rate = sample_rate / hop_length
         self.latent_dim = latent_dim
+        self.strides = strides
 
         # Initial causal conv
         self.input_conv = CausalConv1d(in_channels, channels[0], kernel_size=7)
 
-        # Downsampling blocks with residual connections
+        # Downsampling blocks with explicit stride schedule
         self.blocks = nn.ModuleList()
-        for i in range(len(channels) - 1):
-            stride = 2
-            kernel = 2 * stride
+        for i, stride in enumerate(strides):
+            kernel = 2 * stride  # Kernel size = 2x stride for good coverage
             self.blocks.append(nn.Sequential(
                 ResidualBlock(channels[i]),
                 nn.Conv1d(
                     channels[i], channels[i + 1],
                     kernel_size=kernel,
                     stride=stride,
-                    padding=0
+                    padding=kernel // 2  # Roughly centered
                 ),
                 nn.GroupNorm(8, channels[i + 1]),
                 nn.SiLU()
