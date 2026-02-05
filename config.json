@@ -1,0 +1,32 @@
+{
+    "policy": {
+        "max_seconds": 12,
+        "max_rms": 0.2,
+        "allowed_speakers": [
+            "default",
+            "operator"
+        ]
+    },
+    "ledger_path": "audio_ledger.jsonl",
+    "token_lm_path": null,
+    "watermark_strength": 0.001,
+    "chunk_frames": 5,
+    "deployment_profile": "cpu_edge",
+    "profiles": {
+        "cpu_edge": {
+            "device": "cpu",
+            "chunk_frames": 3,
+            "int8": true
+        },
+        "gpu_realtime": {
+            "device": "cuda",
+            "chunk_frames": 6,
+            "int8": false
+        },
+        "gpu_low_latency": {
+            "device": "cuda",
+            "chunk_frames": 2,
+            "int8": false
+        }
+    }
+}

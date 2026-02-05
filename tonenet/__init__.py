@@ -1,11 +1,12 @@
 """
 ToneNet v2.0 - Neural Audio Codec with Harmonic Modeling
 
-A production-grade neural audio codec featuring:
+A research-grade neural audio codec featuring:
 - Residual Vector Quantization (8×1024 codebook)
 - Causal encoder for streaming
 - Harmonic decoder for interpretable synthesis
 - Variable bitrate (0.75-6 kbps)
+- Deterministic audio pipeline with policy/ledger
 
 Example:
     >>> from tonenet import ToneNetCodec
@@ -31,6 +32,13 @@ from .trainer import ToneNetTrainer
 from .deployment import ToneNetDeployment, export_model, verify_model
 from .audio import AudioCodec, compress_audio, decompress_audio, reconstruct_audio
 
+# Pipeline modules
+from .streaming import StreamingToneNet
+from .watermark import embed_watermark, detect_watermark, verify_watermark
+from .replay import save_trace, replay_trace, TraceRecorder
+from .token_lm import TokenLanguageModel, StreamingLM
+from .orchestrator import AudioOrchestrator, AudioPolicy, AudioLedger
+
 __all__ = [
     # Core
     "ToneNetCodec",
@@ -53,6 +61,19 @@ __all__ = [
     "compress_audio",
     "decompress_audio",
     "reconstruct_audio",
+    # Pipeline
+    "StreamingToneNet",
+    "embed_watermark",
+    "detect_watermark",
+    "verify_watermark",
+    "save_trace",
+    "replay_trace",
+    "TraceRecorder",
+    "TokenLanguageModel",
+    "StreamingLM",
+    "AudioOrchestrator",
+    "AudioPolicy",
+    "AudioLedger",
     # Training/Deployment
     "ToneNetTrainer",
     "ToneNetDeployment",
@@ -60,3 +81,4 @@ __all__ = [
     "export_model",
     "verify_model",
 ]
+
