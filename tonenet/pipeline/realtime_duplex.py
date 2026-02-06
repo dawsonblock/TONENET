@@ -168,20 +168,25 @@ class RealtimeDuplex:
                 continue
 
             # Hybrid approach: Use process() but keep cancellation logic
-            utt = self.vad.process(block)
+            events = self.vad.process(block)
 
-            if utt is not None and len(utt) > 0:
-                # User spoke a full utterance
-                # Barge-in: stop playback immediately
-                if self.audio_out.is_playing:
-                    self.audio_out.stop()
-                    self.cancel.bump()  # Cancel in-flight TTS
-                    self.barge_ins += 1
+            for evt in events:
+                if evt["type"] == "speech_start":
+                    # User started speaking
+                    # Barge-in: stop playback immediately
+                    if self.audio_out.is_playing:
+                        self.audio_out.stop()
+                        self.cancel.bump()  # Cancel in-flight TTS
+                        self.barge_ins += 1
 
-                try:
-                    self.q_utt.put(utt, timeout=0.1)
-                except queue.Full:
-                    pass
+                elif evt["type"] == "utterance":
+                    # User finished utterance
+                    utt = evt["audio"]
+                    if len(utt) > 0:
+                        try:
+                            self.q_utt.put(utt, timeout=0.1)
+                        except queue.Full:
+                            pass
 
     def _stt_thread(self):
         """Transcribe finalized utterances."""

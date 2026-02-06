@@ -16,7 +16,7 @@ import asyncio
 import time
 import hashlib
 from dataclasses import dataclass
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, List
 
 import numpy as np
 import torch
@@ -25,14 +25,15 @@ import torch
 @dataclass
 class UtteranceSegment:
     """Finalized utterance segment ready for STT."""
-    audio16k: np.ndarray      # float32 mono @ 16kHz
-    sr: int                   # sample rate (16000)
-    t0: float                 # start timestamp
-    t1: float                 # end timestamp
-    duration_sec: float       # duration in seconds
-    rms: float                # RMS level
-    vad_stats: dict[str, Any] # VAD metadata
-    audio_sha256: str         # content hash for replay
+
+    audio16k: np.ndarray  # float32 mono @ 16kHz
+    sr: int  # sample rate (16000)
+    t0: float  # start timestamp
+    t1: float  # end timestamp
+    duration_sec: float  # duration in seconds
+    rms: float  # RMS level
+    vad_stats: dict[str, Any]  # VAD metadata
+    audio_sha256: str  # content hash for replay
 
 
 def _rms(x: np.ndarray) -> float:
@@ -49,15 +50,15 @@ def _sha256_bytes(b: bytes) -> str:
 class VADSegmenter:
     """
     Voice Activity Detection with endpointing.
-    
+
     Uses Silero VAD for speech detection and produces finalized
     utterance segments optimized for accuracy-first STT.
-    
+
     Parameters tuned for accuracy:
     - pre_roll_ms: 400ms (preserves consonants)
     - start_ms: 120ms (confirmed speech start)
     - end_silence_ms: 700ms (clean utterance boundaries)
-    
+
     Example:
         vad = VADSegmenter()
         async for event in vad.events():
@@ -65,7 +66,7 @@ class VADSegmenter:
                 segment = event["segment"]
                 # Send to STT
     """
-    
+
     def __init__(
         self,
         *,
@@ -101,14 +102,14 @@ class VADSegmenter:
         self.max_frames = int(max_utt_s * 1000 / frame_ms)
         self.vad_threshold = vad_threshold
         self.device = device
-        
+
         self._q: asyncio.Queue[np.ndarray] = asyncio.Queue(maxsize=64)
         self._stop = False
-        
+
         # Load Silero VAD
         self._vad_model = None
         self._stream = None
-    
+
     def _load_vad(self):
         """Lazy load Silero VAD model."""
         if self._vad_model is None:
@@ -120,14 +121,14 @@ class VADSegmenter:
             )
             self._vad_model.to(self.device)
         return self._vad_model
-    
+
     def stop(self):
         """Stop capture."""
         self._stop = True
         if self._stream:
             self._stream.stop()
             self._stream.close()
-    
+
     def _callback(self, indata, frames, time_info, status):
         """Audio callback for sounddevice."""
         x = indata[:, 0].copy().astype(np.float32)
@@ -135,14 +136,14 @@ class VADSegmenter:
             self._q.put_nowait(x)
         except asyncio.QueueFull:
             pass
-    
+
     def _start_stream(self):
         """Start microphone capture."""
         try:
             import sounddevice as sd
         except ImportError:
             raise ImportError("sounddevice not installed. Run: pip install sounddevice")
-        
+
         self._stream = sd.InputStream(
             samplerate=self.mic_sr,
             channels=1,
@@ -151,26 +152,26 @@ class VADSegmenter:
             callback=self._callback,
         )
         self._stream.start()
-    
+
     def _to16k(self, x: np.ndarray) -> np.ndarray:
         """Resample to 16kHz."""
         if self.mic_sr == 16000:
             return x.astype(np.float32)
-        
+
         try:
             from scipy.signal import resample_poly
         except ImportError:
             raise ImportError("scipy not installed. Run: pip install scipy")
-        
+
         g = np.gcd(self.mic_sr, 16000)
         up = 16000 // g
         down = self.mic_sr // g
         return resample_poly(x, up, down).astype(np.float32)
-    
+
     async def events(self) -> AsyncIterator[dict[str, Any]]:
         """
         Async generator yielding VAD events.
-        
+
         Yields:
             {"type": "speech_start"} - Speech detected
             {"type": "utterance", "segment": UtteranceSegment} - Finalized utterance
@@ -179,13 +180,13 @@ class VADSegmenter:
         self._load_vad()
         self._start_stream()
         self._reset_state()
-        
+
         while not self._stop:
             try:
                 frame = await asyncio.wait_for(self._q.get(), timeout=0.25)
             except asyncio.TimeoutError:
                 continue
-            
+
             # Process frame using the sync method logic
             evt = self._process_frame(frame)
             if evt:
@@ -193,9 +194,9 @@ class VADSegmenter:
                     yield evt
                 elif evt["type"] == "speech_start":
                     yield evt
-        
+
         yield {"type": "stop"}
-    
+
     def _reset_state(self):
         """Reset VAD state."""
         self._ring = np.zeros(self.pre_roll_n, dtype=np.float32)
@@ -205,118 +206,121 @@ class VADSegmenter:
         self._silence_run = 0
         self._cur_frames = []
         self._t0 = None
-    
-    def process(self, chunk: np.ndarray) -> np.ndarray | None:
+
+        # For synchronous processing, accumulate events
+        self._event_buffer: List[dict[str, Any]] = []
+
+    def process(self, chunk: np.ndarray) -> List[dict[str, Any]]:
         """
         Synchronous processing for threaded pipelines.
-        
+
         Args:
             chunk: Audio chunk
-            
+
         Returns:
-            Utterance audio (16kHz mono) if finalized, else None
+            A list of event dicts ({"type": "speech_start"} or {"type": "utterance", "audio": ...}).
+            Returns an empty list if no events occurred.
         """
         self._load_vad()
-        
+
         # Determine if we should reset (first call)
         if not hasattr(self, "_in_speech"):
             self._reset_state()
-            
-        # Process the chunk as one or more frames
-        # Simple handling: assume chunk is roughly frame-sized or handle it
-        # For simplicity, we just pass it to _process_frame logic
-        # But we need to be careful about strict frame sizes for VAD
-        # Silero expects 16k chunks > 512 samples.
-        
+
         # Accumulate into a buffer and process in standard frame sizes
         if not hasattr(self, "_proc_buf"):
             self._proc_buf = np.array([], dtype=np.float32)
-            
+
         self._proc_buf = np.concatenate([self._proc_buf, chunk])
-        
-        utt_audio = None
-        
+
+        # Clear event buffer for this call
+        self._event_buffer = []
+
         # Process in chunks of self.frame_n
         while len(self._proc_buf) >= self.frame_n:
-            frame = self._proc_buf[:self.frame_n]
-            self._proc_buf = self._proc_buf[self.frame_n:]
-            
-            evt = self._process_frame(frame)
-            if evt and evt["type"] == "utterance":
-                utt_audio = evt["segment"].audio16k
-                
-        return utt_audio
-        
-    def _process_frame(self, frame: np.ndarray) -> dict[str, Any] | None:
-        """Internal frame processing logic."""
+            frame = self._proc_buf[: self.frame_n]
+            self._proc_buf = self._proc_buf[self.frame_n :]
+
+            events = self._process_frame(frame)
+            if events:
+                self._event_buffer.extend(events)
+
+        return self._event_buffer
+
+    def _process_frame(self, frame: np.ndarray) -> List[dict[str, Any]]:
+        """Internal frame processing logic. Returns a list of events."""
+        events: List[dict[str, Any]] = []
+
         # Update pre-roll ring buffer
         n = frame.shape[0]
         if n >= self.pre_roll_n:
-            self._ring[:] = frame[-self.pre_roll_n:]
+            self._ring[:] = frame[-self.pre_roll_n :]
             self._ring_idx = 0
         else:
             end = self._ring_idx + n
             if end <= self.pre_roll_n:
-                self._ring[self._ring_idx:end] = frame
+                self._ring[self._ring_idx : end] = frame
             else:
                 first = self.pre_roll_n - self._ring_idx
-                self._ring[self._ring_idx:] = frame[:first]
+                self._ring[self._ring_idx :] = frame[:first]
                 self._ring[: end - self.pre_roll_n] = frame[first:]
             self._ring_idx = (self._ring_idx + n) % self.pre_roll_n
-        
+
         # VAD on 16kHz frame
         frame16 = self._to16k(frame)
         wav = torch.from_numpy(frame16).unsqueeze(0)
-        
+
         # Ensure VAD model is on device
         if next(self._vad_model.parameters()).device != torch.device(self.device):
             self._vad_model.to(self.device)
-            
+
         with torch.no_grad():
             p = float(self._vad_model(wav, 16000).item())
-        
+
         is_speech = p > self.vad_threshold
-        
+
         if not self._in_speech:
             if is_speech:
                 self._speech_run += 1
             else:
                 self._speech_run = 0
-            
+
             if self._speech_run >= self.start_frames:
                 self._in_speech = True
                 self._silence_run = 0
                 self._speech_run = 0
                 self._t0 = time.time()
-                
+
                 # Include pre-roll
                 if self._ring_idx == 0:
                     pre = self._ring.copy()
                 else:
-                    pre = np.concatenate([self._ring[self._ring_idx:], self._ring[:self._ring_idx]])
+                    pre = np.concatenate(
+                        [self._ring[self._ring_idx :], self._ring[: self._ring_idx]]
+                    )
                 self._cur_frames = [pre]
-                return {"type": "speech_start"}
+                return [{"type": "speech_start"}]
         else:
             self._cur_frames.append(frame)
             if is_speech:
                 self._silence_run = 0
             else:
                 self._silence_run += 1
-            
+
             # Finalize utterance
             total_frames = len(self._cur_frames)
             if self._silence_run >= self.end_frames or total_frames >= self.max_frames:
                 self._in_speech = False
                 t1 = time.time()
-                
+
                 # Drop if too short
                 if total_frames < self.min_frames:
                     self._cur_frames = []
-                    return None
-                
+                    return []
+
                 audio = np.concatenate(self._cur_frames).astype(np.float32)
                 audio16 = self._to16k(audio)
-                
+
                 seg = UtteranceSegment(
                     audio16k=audio16,
                     sr=16000,
@@ -334,18 +338,18 @@ class VADSegmenter:
                 )
                 self._cur_frames = []
                 self._silence_run = 0
-                return {"type": "utterance", "segment": seg}
-        
-        return None
+                return [{"type": "utterance", "segment": seg}]
+
+        return []
 
 
 class SimulatedVADSegmenter:
     """
     Simulated VAD for testing without microphone.
-    
+
     Generates fake utterance segments from audio files or silence.
     """
-    
+
     def __init__(self, audio_chunks: list[np.ndarray] | None = None):
         """
         Args:
@@ -354,13 +358,13 @@ class SimulatedVADSegmenter:
         self.audio_chunks = audio_chunks or []
         self._buffer = np.array([], dtype=np.float32)
         self._frame_count = 0
-    
+
     async def events(self) -> AsyncIterator[dict[str, Any]]:
         """Yield simulated events."""
         for chunk in self.audio_chunks:
             yield {"type": "speech_start"}
             await asyncio.sleep(0.1)
-            
+
             seg = UtteranceSegment(
                 audio16k=chunk.astype(np.float32),
                 sr=16000,
@@ -373,21 +377,33 @@ class SimulatedVADSegmenter:
             )
             yield {"type": "utterance", "segment": seg}
             await asyncio.sleep(0.1)
-        
+
         yield {"type": "stop"}
-    
-    def process(self, chunk: np.ndarray) -> np.ndarray | None:
+
+    def process(self, chunk: np.ndarray) -> List[dict[str, Any]]:
         """Sync process method."""
-        # Simple simulation: accumulate until threshold then release
+        # Simple simulation
         self._buffer = np.concatenate([self._buffer, chunk])
-        
+
+        events = []
+
+        # Emit speech_start halfway to threshold - simple logic
+        # We need a latch to prevent repeated start events per utterance
+        if not hasattr(self, "_sent_start"):
+            self._sent_start = False
+
+        if len(self._buffer) > 16000 and not self._sent_start:
+            events.append({"type": "speech_start"})
+            self._sent_start = True
+
         # Every 32000 samples (2s), emit an utterance
         if len(self._buffer) > 32000:
             utt = self._buffer[:32000]
             self._buffer = self._buffer[32000:]
-            return utt.astype(np.float32)
-            
-        return None
-    
+            events.append({"type": "utterance", "audio": utt.astype(np.float32)})
+            self._sent_start = False
+
+        return events
+
     def stop(self):
         pass
