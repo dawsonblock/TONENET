@@ -1,40 +1,33 @@
 <p align="center">
   <h1 align="center">🎵 ToneNet v2.0</h1>
   <p align="center">
-    <strong>Neural Audio Codec with Harmonic Modeling & Voice Cloning</strong>
+    <strong>Neural Audio Codec with Harmonic Modeling & Voice Agent System</strong>
   </p>
   <p align="center">
+    <a href="#features">Features</a> •
     <a href="#installation">Installation</a> •
     <a href="#quick-start">Quick Start</a> •
-    <a href="#features">Features</a> •
     <a href="#architecture">Architecture</a> •
-    <a href="#voice-cloning">Voice Cloning</a>
+    <a href="#voice-agent">Voice Agent</a>
   </p>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python 3.9+">
-  <img src="https://img.shields.io/badge/pytorch-2.0+-red.svg" alt="PyTorch 2.0+">
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License">
-  <img src="https://img.shields.io/badge/bitrate-0.75--6_kbps-purple.svg" alt="Bitrate">
 </p>
 
 ---
 
-## ✨ Features
+## Features
 
 | Feature | Description |
 |---------|-------------|
-| 🎯 **Residual VQ** | 8×1024 codebook with EMA updates |
-| 📉 **Ultra-low bitrate** | 0.75-6 kbps variable rate |
-| 🔊 **Harmonic decoder** | Explicit f0, harmonics, phases for interpretability |
-| ⚡ **Streaming-ready** | Causal convolutions, 75 Hz frame rate |
-| 🎤 **Voice cloning** | ECAPA-TDNN speaker encoder + AR/NAR generation |
-| 📦 **File compression** | Compress/decompress audio files to `.tnc` format |
+| 🎯 **Ultra-Low Bitrate** | 0.75–6 kbps with variable quantization |
+| 🌊 **Harmonic Decoder** | Interpretable synthesis (f0 + harmonics + phases) |
+| ⚡ **Streaming Ready** | Causal encoder, 75 Hz frame rate |
+| 🔐 **Identity Control** | Voice cloning guard + watermarking |
+| 🧠 **Self-Improving** | Online quality adaptation |
+| 🌐 **Multi-Agent Mesh** | Networked voice coordination |
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ```bash
 git clone https://github.com/dawsonblock/TONENET.git
@@ -42,15 +35,11 @@ cd TONENET
 pip install -e .
 ```
 
-With optional dependencies:
-
-```bash
-pip install -e ".[full]"  # Includes STOI, PESQ metrics + phonemizer
-```
+**Requirements:** Python 3.9+, PyTorch 2.0+
 
 ---
 
-## 🎬 Quick Start
+## Quick Start
 
 ### Basic Codec
 
@@ -58,169 +47,172 @@ pip install -e ".[full]"  # Includes STOI, PESQ metrics + phonemizer
 from tonenet import ToneNetCodec
 import torch
 
-model = ToneNetCodec()
+codec = ToneNetCodec()
 audio = torch.randn(1, 1, 24000)  # 1 second @ 24kHz
 
-# Encode → discrete codes
-codes = model.encode(audio)
+# Encode → Decode
+codes = codec.encode(audio)
+reconstructed = codec.decode(codes)
 
-# Decode → reconstructed audio
-reconstructed = model.decode(codes)
-
-# Full forward with harmonic outputs
-recon, outputs = model(audio)
-print(f"f0: {outputs['f0'].mean():.1f} Hz")
-print(f"Harmonics: {outputs['H'].shape}")
+# Variable bitrate
+codes_low = codec.encode(audio, n_quantizers=1)   # 0.75 kbps
+codes_high = codec.encode(audio, n_quantizers=8)  # 6.0 kbps
 ```
 
-### Variable Bitrate
+### Audio File Compression
 
 ```python
-# Trade quality for compression
-for n_q in [1, 4, 8]:
-    info = model.get_bitrate(n_quantizers=n_q)
-    print(f"{n_q} quantizers: {info['bitrate_kbps']:.2f} kbps")
-# Output:
-# 1 quantizers: 0.75 kbps
-# 4 quantizers: 3.00 kbps  
-# 8 quantizers: 6.00 kbps
+from tonenet import compress_audio, decompress_audio
+
+compress_audio("input.wav", "compressed.tnc", n_quantizers=4)
+decompress_audio("compressed.tnc", "output.wav")
 ```
 
-### File Compression
+### Streaming Decode
 
 ```python
-from tonenet import AudioCodec
+from tonenet import StreamingToneNet
 
-codec = AudioCodec(n_quantizers=4)
-
-# Compress any audio file
-codec.compress("input.wav", "compressed.tnc")
-
-# Decompress back to audio
-codec.decompress("compressed.tnc", "output.wav")
+streamer = StreamingToneNet(chunk_frames=5)  # 66ms latency
+streamer.push_tokens(tokens)
+audio = streamer.pop_audio()
 ```
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        ToneNet v2.0                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Audio (24kHz) ──▶ [Causal Encoder] ──▶ Latent (75Hz)      │
-│                           │                                 │
-│                           ▼                                 │
-│                    [RVQ: 8×1024]                           │
-│                           │                                 │
-│                           ▼                                 │
-│                  [Harmonic Decoder]                        │
-│                           │                                 │
-│            ┌──────────────┼──────────────┐                 │
-│            ▼              ▼              ▼                 │
-│          f0 (Hz)    Harmonics (64)    Noise                │
-│            │              │              │                 │
-│            └──────────────┴──────────────┘                 │
-│                           │                                 │
-│                    [Additive Synth]                        │
-│                           │                                 │
-│                           ▼                                 │
-│                   Reconstructed Audio                       │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        ToneNet v2.0                             │
+├──────────────────┬──────────────────┬───────────────────────────┤
+│   CORE CODEC     │     PIPELINE     │      VOICE AGENT          │
+├──────────────────┼──────────────────┼───────────────────────────┤
+│ encoder.py       │ streaming.py     │ planner.py                │
+│ decoder.py       │ watermark.py     │ memory.py                 │
+│ quantizer.py     │ replay.py        │ identity.py               │
+│ codec.py         │ token_lm.py      │ mesh.py                   │
+│ losses.py        │ orchestrator.py  │ improve.py                │
+└──────────────────┴──────────────────┴───────────────────────────┘
 ```
 
-### Specifications
+### Core Codec (5.6M params)
 
-| Parameter | Value |
-|-----------|-------|
-| Sample Rate | 24 kHz |
-| Frame Rate | 75 Hz |
-| Latent Dim | 256 |
-| Codebook | 1024 per layer |
-| Quantizers | 1-8 (variable) |
-| Harmonics | 64 |
-| Bitrate | 0.75-6 kbps |
-| Compression | 64-512× vs 16-bit PCM |
+- **Encoder**: Causal CNN with strides [5,4,4,4] → 320x downsample → 75 Hz
+- **RVQ**: 8 quantizers × 1024 codebook entries
+- **Decoder**: Harmonic synthesis (f0, amplitudes, phases, noise)
+
+### Bitrate
+
+| Quantizers | Bitrate | Use Case |
+|------------|---------|----------|
+| 1 | 0.75 kbps | Ultra-low bandwidth |
+| 4 | 3.0 kbps | Voice streaming |
+| 8 | 6.0 kbps | High quality |
 
 ---
 
-## 🎤 Voice Cloning
+## Voice Agent
 
-ToneNet includes an experimental voice cloning extension:
+Full autonomous voice agent with:
+
+### Planner Integration
 
 ```python
-from tonenet.voice_cloning import ToneNetVoiceCloner
-import torch
+from tonenet import VoiceAgentPlanner, LocalPlannerLLM, AudioOrchestrator
 
-cloner = ToneNetVoiceCloner()
+planner = LocalPlannerLLM()
+orch = AudioOrchestrator()
+agent = VoiceAgentPlanner(planner, orch)
 
-# 5 second reference audio
-reference = torch.randn(1, 24000 * 5)
-
-# Clone voice
-audio, info = cloner.clone_voice(
-    text="Hello, this is a voice clone.",
-    reference_audio=reference
-)
+result = agent.step("Hello, how are you?")
 ```
 
-**Architecture:**
-
-- **ECAPA-TDNN** speaker encoder (256-dim embeddings)
-- **Transformer** text encoder (phoneme → embeddings)
-- **AR model** for first quantizer generation
-- **NAR model** for parallel refinement
-
----
-
-## 📁 Project Structure
-
-```
-tonenet/
-├── __init__.py          # Package exports
-├── codec.py             # ToneNetCodec main class
-├── encoder.py           # Causal CNN encoder
-├── decoder.py           # Harmonic decoder + synthesis
-├── quantizer.py         # VQ-VAE with RVQ
-├── losses.py            # Multi-STFT, Mel losses
-├── metrics.py           # SNR, STOI, PESQ
-├── audio.py             # File compression utilities
-├── trainer.py           # Training framework
-├── controller.py        # PI controller
-├── deployment.py        # Export utilities
-└── voice_cloning/
-    ├── speaker_encoder.py  # ECAPA-TDNN
-    ├── text_encoder.py     # Phoneme encoder
-    ├── ar_model.py         # Autoregressive LM
-    ├── nar_model.py        # Non-autoregressive
-    └── voice_cloner.py     # Complete pipeline
-```
-
----
-
-## 🔬 Training
+### Semantic Memory
 
 ```python
-from tonenet import ToneNetCodec, ToneNetTrainer
+from tonenet import SemanticMemoryGraph
 
-model = ToneNetCodec()
-trainer = ToneNetTrainer(model, device='cuda')
+memory = SemanticMemoryGraph()
+node_id = memory.store(tokens, {"speaker": "user", "text": "hello"})
+similar = memory.search(query_tokens, top_k=5)
+```
 
-for batch in dataloader:
-    losses = trainer.train_step(batch)
-    print(f"Loss: {losses['loss']:.4f}")
+### Identity Guard
+
+```python
+from tonenet import IdentityGuard
+
+guard = IdentityGuard()
+guard.register_speaker("operator", "Operator", reference_tokens, locked=True)
+
+# Verify identity
+is_match, score = guard.verify_speaker("operator", tokens)
+
+# Detect cloning attempts
+alerts = guard.detect_clone_attempt(suspicious_tokens)
+```
+
+### Self-Improving System
+
+```python
+from tonenet import AdaptiveVoiceAgent, ToneNetCodec
+
+agent = AdaptiveVoiceAgent(codec=ToneNetCodec())
+audio, quality = agent.synthesize(tokens, speaker_id="operator")
+agent.improver.add_human_feedback(tokens, audio, score=0.9)
+```
+
+### Multi-Agent Mesh
+
+```python
+from tonenet import AudioMeshNode
+
+node = AudioMeshNode(node_id="agent1", port=7700)
+node.start()
+node.connect_peer("agent2", "192.168.1.10", 7701)
+node.send_tokens(tokens, target_id="agent2")
 ```
 
 ---
 
-## 📄 License
+## Module Reference
 
-MIT License - see [LICENSE](LICENSE) for details.
+| Module | Classes/Functions |
+|--------|-------------------|
+| `codec` | `ToneNetCodec` |
+| `streaming` | `StreamingToneNet` |
+| `watermark` | `embed_watermark`, `detect_watermark` |
+| `replay` | `save_trace`, `replay_trace` |
+| `token_lm` | `TokenLanguageModel`, `StreamingLM` |
+| `orchestrator` | `AudioOrchestrator`, `AudioPolicy`, `AudioLedger` |
+| `planner` | `VoiceAgentPlanner`, `LocalPlannerLLM`, `APIPlannerLLM` |
+| `memory` | `SemanticMemoryGraph`, `CrossModalMemory` |
+| `identity` | `IdentityGuard`, `VoiceMorpher` |
+| `mesh` | `AudioMeshNode`, `MeshCoordinator` |
+| `improve` | `SelfImprovingSystem`, `AdaptiveVoiceAgent` |
 
 ---
 
-<p align="center">
-  <sub>Built with 🎵 by <a href="https://github.com/dawsonblock">Dawson Block</a></sub>
-</p>
+## Training
+
+### Token LM (Distributed)
+
+```bash
+torchrun --nproc_per_node=2 -m tonenet.train_lm --data tokens.pt --steps 100000
+```
+
+### Export
+
+```python
+from tonenet.export import export_codec_onnx, export_torchscript
+
+export_codec_onnx("tonenet.onnx")
+export_torchscript("tonenet.pt")
+```
+
+---
+
+## License
+
+MIT License © 2026 Dawson Block
