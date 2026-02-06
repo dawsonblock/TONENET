@@ -8,7 +8,7 @@ import json
 import torch
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
-from .codec import ToneNetCodec
+from .core import ToneNetCodec
 
 
 def save_trace(

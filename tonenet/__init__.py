@@ -1,78 +1,107 @@
 """
-ToneNet v2.0 - Neural Audio Codec with Harmonic Modeling
+ToneNet v2.0 - Neural Audio Codec & Real-Time Voice Agent
 
-A research-grade neural audio codec featuring:
-- Residual Vector Quantization (8×1024 codebook)
-- Causal encoder for streaming
-- Harmonic decoder for interpretable synthesis
-- Variable bitrate (0.75-6 kbps)
-- Deterministic audio pipeline with policy/ledger
-
-Example:
-    >>> from tonenet import ToneNetCodec
-    >>> import torch
-    >>> 
-    >>> model = ToneNetCodec()
-    >>> audio = torch.randn(1, 1, 24000)  # 1 second @ 24kHz
-    >>> reconstructed, outputs = model(audio)
-    >>> codes = model.encode(audio)
-    >>> decoded = model.decode(codes)
+Organized into subpackages:
+- core: Neural audio codec (VQ-VAE)
+- stt: Speech-to-text backends
+- tts: Text-to-speech backends
+- vad: Voice activity detection
+- pipeline: Real-time duplex pipelines
+- agent: Reasoning and planning
+- identity: Speaker identification
 """
 
 __version__ = "2.0.0"
 
-from .codec import ToneNetCodec
-from .quantizer import VectorQuantizer, ResidualVectorQuantizer
-from .encoder import ToneNetEncoder, CausalConv1d, ResidualBlock
-from .decoder import HarmonicDecoder
-from .losses import MultiResolutionSTFTLoss, MelSpectrogramLoss
-from .metrics import compute_snr, compute_stoi, compute_pesq
-from .controller import ClassicalController
-from .trainer import ToneNetTrainer
-from .deployment import ToneNetDeployment, export_model, verify_model
-from .audio import AudioCodec, compress_audio, decompress_audio, reconstruct_audio
+# Core codec
+from .core import (
+    ToneNetCodec,
+    ToneNetEncoder,
+    HarmonicDecoder,
+    VectorQuantizer,
+    ResidualVectorQuantizer,
+    MultiResolutionSTFTLoss,
+    AudioCodec,
+    compress_audio,
+    decompress_audio,
+)
 
-# Pipeline modules
+# STT backends
+from .stt import (
+    FasterWhisperSTT,
+    STTBackendConfig,
+    create_stt,
+    MockSTTBackend,
+    WhisperCppSTT,
+    WhisperCppConfig,
+    MockWhisperCppSTT,
+)
+
+# TTS backends
+from .tts import (
+    PiperTTS,
+    XTTSTTS,
+    TTSBackendConfig,
+    create_tts,
+    MockTTSBackend,
+    XTTSEngine,
+)
+
+# VAD
+from .vad import (
+    VADSegmenter,
+    UtteranceSegment,
+    SimulatedVADSegmenter,
+    WebRTCVADGate,
+    WebRTCVADConfig,
+    MockWebRTCVAD,
+)
+
+# Pipeline
+from .pipeline import (
+    MicStream,
+    AudioOutput,
+    AudioIOConfig,
+    MockMicStream,
+    AudioPlayer,
+    RealtimeDuplex,
+    DuplexConfig,
+    DuplexRunner,
+    run_duplex,
+    Turn,
+    RealtimeVoiceAgent,
+    RealtimeAgentConfig,
+    create_realtime_agent,
+    JsonlLedger,
+    sentence_chunks,
+    split_text_to_sentences,
+)
+
+# Agent
+from .agent import (
+    EchoReasoner,
+    LLMReasoner,
+    NeuralReasoner,
+    ReasonerConfig,
+    create_reasoner,
+    VoiceAgentPlanner,
+    SemanticMemoryGraph,
+)
+
+# Identity
+from .identity import (
+    IdentityGuard,
+    SpeakerProfile,
+)
+
+# Streaming & orchestration
 from .streaming import StreamingToneNet
-from .watermark import embed_watermark, detect_watermark, verify_watermark
-from .replay import save_trace, replay_trace, TraceRecorder
-from .token_lm import TokenLanguageModel, StreamingLM
-from .orchestrator import AudioOrchestrator as LegacyOrchestrator, AudioPolicy, AudioLedger
-from .tokens import pack_codes, unpack_codes, normalize_codes, get_code_info
-from .mic_stream import MicStream, SimulatedMicStream
+from .orchestrator_api import AudioOrchestrator
 
-# STT/TTS integration
-from .stt import StreamingSTT, MockSTT, get_stt
-from .tts import StreamingTTS, MockTTS, get_tts
-from .orchestrator_api import AudioOrchestrator, create_orchestrator
-
-# Advanced agent modules
-from .planner import VoiceAgentPlanner, BasePlannerLLM, LocalPlannerLLM, APIPlannerLLM
-from .memory import SemanticMemoryGraph, CrossModalMemory, MemoryNode
-from .identity import IdentityGuard, VoiceMorpher, SpeakerProfile, SpeakerEmbedder
-from .mesh import AudioMeshNode, MeshCoordinator, MeshMessage, MeshPeer
-from .improve import SelfImprovingSystem, AdaptiveVoiceAgent, QualityEstimator, OnlineAdapter
-
-# Duplex pipeline
-from .vad import VADSegmenter, UtteranceSegment, SimulatedVADSegmenter
-from .stt_whisper import WhisperSTT, STTConfig, MockWhisperSTT, get_stt as get_whisper_stt
-from .tts_xtts import XTTSEngine, TTSConfig, XTTSVoice, MockXTTSEngine, get_tts as get_xtts
-from .ledger import JsonlLedger, sha256_bytes, replay_print
-from .duplex_runner import DuplexRunner, run_duplex, Turn
-
-# Enhanced real-time pipeline
-from .stt_whispercpp import WhisperCppSTT, WhisperCppConfig, MockWhisperCppSTT, get_whispercpp_stt
-from .vad_webrtc import WebRTCVADGate, WebRTCVADConfig, MockWebRTCVAD
-from .text_chunker import sentence_chunks, split_text_to_sentences
-from .audio_player import AudioPlayer
-from .realtime_agent import RealtimeVoiceAgent, RealtimeAgentConfig, create_realtime_agent
-
-# Optimized voice core (Mac M2)
-from .audio_io import MicStream, AudioOutput, AudioIOConfig, MockMicStream
-from .stt_backend import FasterWhisperSTT, WhisperCppSTT as WhisperCppBackend, STTBackendConfig, create_stt
-from .tts_backend import PiperTTS, XTTSTTS, TTSBackendConfig, create_tts
-from .reasoner import EchoReasoner, LLMReasoner, NeuralReasoner, ReasonerConfig, create_reasoner
-from .realtime_duplex import RealtimeDuplex, DuplexConfig
+# Utilities
+from .watermark import embed_watermark, detect_watermark
+from .improve import SelfImprovingSystem, AdaptiveVoiceAgent
+from .mesh import AudioMeshNode, MeshCoordinator
 
 __all__ = [
     # Core
@@ -81,134 +110,68 @@ __all__ = [
     "HarmonicDecoder",
     "VectorQuantizer",
     "ResidualVectorQuantizer",
-    # Layers
-    "CausalConv1d",
-    "ResidualBlock",
-    # Losses
     "MultiResolutionSTFTLoss",
-    "MelSpectrogramLoss",
-    # Metrics
-    "compute_snr",
-    "compute_stoi",
-    "compute_pesq",
-    # Audio
     "AudioCodec",
     "compress_audio",
     "decompress_audio",
-    "reconstruct_audio",
-    # Pipeline
-    "StreamingToneNet",
-    "embed_watermark",
-    "detect_watermark",
-    "verify_watermark",
-    "save_trace",
-    "replay_trace",
-    "TraceRecorder",
-    "TokenLanguageModel",
-    "StreamingLM",
-    "AudioOrchestrator",
-    "AudioPolicy",
-    "AudioLedger",
-    # Planner
-    "VoiceAgentPlanner",
-    "BasePlannerLLM",
-    "LocalPlannerLLM",
-    "APIPlannerLLM",
-    # Memory
-    "SemanticMemoryGraph",
-    "CrossModalMemory",
-    "MemoryNode",
-    # Identity
-    "IdentityGuard",
-    "VoiceMorpher",
-    "SpeakerProfile",
-    "SpeakerEmbedder",
-    # Mesh
-    "AudioMeshNode",
-    "MeshCoordinator",
-    "MeshMessage",
-    "MeshPeer",
-    # Self-Improving
-    "SelfImprovingSystem",
-    "AdaptiveVoiceAgent",
-    "QualityEstimator",
-    "OnlineAdapter",
-    # Token Utilities
-    "pack_codes",
-    "unpack_codes",
-    "normalize_codes",
-    "get_code_info",
-    # Microphone
-    "MicStream",
-    "SimulatedMicStream",
-    # STT/TTS
-    "StreamingSTT",
-    "MockSTT",
-    "get_stt",
-    "StreamingTTS",
-    "MockTTS",
-    "get_tts",
-    "create_orchestrator",
-    "LegacyOrchestrator",
-    # Training/Deployment
-    "ToneNetTrainer",
-    "ToneNetDeployment",
-    "ClassicalController",
-    "export_model",
-    "verify_model",
-    # Duplex Pipeline
-    "VADSegmenter",
-    "UtteranceSegment",
-    "SimulatedVADSegmenter",
-    "WhisperSTT",
-    "STTConfig",
-    "MockWhisperSTT",
-    "get_whisper_stt",
-    "XTTSEngine",
-    "TTSConfig",
-    "XTTSVoice",
-    "MockXTTSEngine",
-    "get_xtts",
-    "JsonlLedger",
-    "sha256_bytes",
-    "replay_print",
-    "DuplexRunner",
-    "run_duplex",
-    "Turn",
-    # Enhanced Real-Time Pipeline
+    # STT
+    "FasterWhisperSTT",
+    "STTBackendConfig",
+    "create_stt",
+    "MockSTTBackend",
     "WhisperCppSTT",
     "WhisperCppConfig",
     "MockWhisperCppSTT",
-    "get_whispercpp_stt",
-    "WebRTCVADGate",
-    "WebRTCVADConfig",
-    "MockWebRTCVAD",
-    "sentence_chunks",
-    "split_text_to_sentences",
-    "AudioPlayer",
-    "RealtimeVoiceAgent",
-    "RealtimeAgentConfig",
-    "create_realtime_agent",
-    # Optimized Voice Core (Mac M2)
-    "MicStream",
-    "AudioOutput",
-    "AudioIOConfig",
-    "MockMicStream",
-    "FasterWhisperSTT",
-    "WhisperCppBackend",
-    "STTBackendConfig",
-    "create_stt",
+    # TTS
     "PiperTTS",
     "XTTSTTS",
     "TTSBackendConfig",
     "create_tts",
+    "MockTTSBackend",
+    "XTTSEngine",
+    # VAD
+    "VADSegmenter",
+    "UtteranceSegment",
+    "SimulatedVADSegmenter",
+    "WebRTCVADGate",
+    "WebRTCVADConfig",
+    "MockWebRTCVAD",
+    # Pipeline
+    "MicStream",
+    "AudioOutput",
+    "AudioIOConfig",
+    "MockMicStream",
+    "AudioPlayer",
+    "RealtimeDuplex",
+    "DuplexConfig",
+    "DuplexRunner",
+    "run_duplex",
+    "Turn",
+    "RealtimeVoiceAgent",
+    "RealtimeAgentConfig",
+    "create_realtime_agent",
+    "JsonlLedger",
+    "sentence_chunks",
+    "split_text_to_sentences",
+    # Agent
     "EchoReasoner",
     "LLMReasoner",
     "NeuralReasoner",
     "ReasonerConfig",
     "create_reasoner",
-    "RealtimeDuplex",
-    "DuplexConfig",
+    "VoiceAgentPlanner",
+    "SemanticMemoryGraph",
+    # Identity
+    "IdentityGuard",
+    "SpeakerProfile",
+    # Streaming
+    "StreamingToneNet",
+    "AudioOrchestrator",
+    # Utils
+    "embed_watermark",
+    "detect_watermark",
+    "SelfImprovingSystem",
+    "AdaptiveVoiceAgent",
+    "AudioMeshNode",
+    "MeshCoordinator",
 ]
-
-

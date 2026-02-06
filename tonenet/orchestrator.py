@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Set
 import torch
 
-from .codec import ToneNetCodec
+from .core import ToneNetCodec
 from .streaming import StreamingToneNet
 from .watermark import embed_watermark
 from .replay import save_trace

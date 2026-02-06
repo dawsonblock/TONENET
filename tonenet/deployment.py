@@ -16,7 +16,7 @@ from typing import List, Optional, Dict
 import numpy as np
 import torch
 
-from .codec import ToneNetCodec
+from .core import ToneNetCodec
 
 
 class ToneNetDeployment:

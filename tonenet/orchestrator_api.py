@@ -16,11 +16,11 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Callable
 import torch
 
-from .codec import ToneNetCodec
+from .core import ToneNetCodec
 from .streaming import StreamingToneNet
 from .watermark import embed_watermark
 from .replay import save_trace
-from .tokens import pack_codes, normalize_codes
+from .core.tokens import pack_codes, normalize_codes
 
 
 class AudioOrchestrator:
@@ -85,12 +85,18 @@ class AudioOrchestrator:
         )
         
         # STT
-        from .stt import get_stt
-        self.stt = get_stt(model_size=stt_model, mock=use_mock_stt)
+        from .stt import create_stt, MockSTTBackend
+        if use_mock_stt:
+            self.stt = MockSTTBackend()
+        else:
+            self.stt = create_stt()
         
         # TTS
-        from .tts import get_tts
-        self.tts = get_tts(voice=tts_voice, mock=use_mock_tts)
+        from .tts import create_tts, MockTTSBackend
+        if use_mock_tts:
+            self.tts = MockTTSBackend()
+        else:
+            self.tts = create_tts()
         
         # Watermark
         self.watermark_strength = watermark_strength

@@ -13,9 +13,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Dict, Any
 
-from .codec import ToneNetCodec
-from .losses import MultiResolutionSTFTLoss, MelSpectrogramLoss
-from .metrics import compute_snr, compute_stoi, compute_pesq
+from .core import ToneNetCodec
+from .core.losses import MultiResolutionSTFTLoss, MelSpectrogramLoss
+from .core.metrics import compute_snr, compute_stoi, compute_pesq
 
 
 class ToneNetTrainer:

@@ -7,7 +7,7 @@ Exports ToneNet codec to ONNX format for deployment on various runtimes.
 import torch
 from pathlib import Path
 from typing import Optional
-from .codec import ToneNetCodec
+from .core import ToneNetCodec
 
 
 class EncoderWrapper(torch.nn.Module):
