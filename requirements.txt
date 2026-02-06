@@ -32,3 +32,8 @@ pyyaml>=6.0.0
 # Audio metrics (optional)
 # pystoi>=0.3.0
 # pesq>=0.0.4
+
+# Web UI & Server
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.9
