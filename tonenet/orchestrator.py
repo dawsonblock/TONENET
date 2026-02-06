@@ -1,22 +1,26 @@
 """
 Audio pipeline orchestrator.
 
-Binds: text → tokens → LM refine → gate/ledger → streaming decode → watermark → replay
+Binds: tokens → LM refine → gate/ledger → streaming decode → watermark → replay
 
 Deterministic, policy-gated, traceable audio emission system.
+
+IMPORTANT: Codec returns List[Tensor[B,T]] (one per quantizer).
+Use tokens.normalize_codes() to handle both formats.
 """
 
 import json
 import time
 import hashlib
 from pathlib import Path
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, Optional, Set, List, Union
 import torch
 
 from .codec import ToneNetCodec
 from .streaming import StreamingToneNet
 from .watermark import embed_watermark
 from .replay import save_trace
+from .tokens import normalize_codes, get_code_info, pack_codes
 
 
 class AudioPolicy:

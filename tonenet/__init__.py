@@ -38,6 +38,8 @@ from .watermark import embed_watermark, detect_watermark, verify_watermark
 from .replay import save_trace, replay_trace, TraceRecorder
 from .token_lm import TokenLanguageModel, StreamingLM
 from .orchestrator import AudioOrchestrator, AudioPolicy, AudioLedger
+from .tokens import pack_codes, unpack_codes, normalize_codes, get_code_info
+from .mic_stream import MicStream, SimulatedMicStream
 
 # Advanced agent modules
 from .planner import VoiceAgentPlanner, BasePlannerLLM, LocalPlannerLLM, APIPlannerLLM
@@ -105,6 +107,14 @@ __all__ = [
     "AdaptiveVoiceAgent",
     "QualityEstimator",
     "OnlineAdapter",
+    # Token Utilities
+    "pack_codes",
+    "unpack_codes",
+    "normalize_codes",
+    "get_code_info",
+    # Microphone
+    "MicStream",
+    "SimulatedMicStream",
     # Training/Deployment
     "ToneNetTrainer",
     "ToneNetDeployment",
