@@ -86,7 +86,7 @@ def test_variable_bitrate():
 
 def test_encoder_stride_validation():
     """Encoder should reject invalid stride configurations."""
-    from tonenet.encoder import ToneNetEncoder
+    from tonenet.core.encoder import ToneNetEncoder
     
     # Valid: 5*4*4*4 = 320
     encoder = ToneNetEncoder()
