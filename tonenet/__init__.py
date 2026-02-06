@@ -67,6 +67,13 @@ from .text_chunker import sentence_chunks, split_text_to_sentences
 from .audio_player import AudioPlayer
 from .realtime_agent import RealtimeVoiceAgent, RealtimeAgentConfig, create_realtime_agent
 
+# Optimized voice core (Mac M2)
+from .audio_io import MicStream, AudioOutput, AudioIOConfig, MockMicStream
+from .stt_backend import FasterWhisperSTT, WhisperCppSTT as WhisperCppBackend, STTBackendConfig, create_stt
+from .tts_backend import PiperTTS, XTTSTTS, TTSBackendConfig, create_tts
+from .reasoner import EchoReasoner, LLMReasoner, NeuralReasoner, ReasonerConfig, create_reasoner
+from .realtime_duplex import RealtimeDuplex, DuplexConfig
+
 __all__ = [
     # Core
     "ToneNetCodec",
@@ -182,6 +189,26 @@ __all__ = [
     "RealtimeVoiceAgent",
     "RealtimeAgentConfig",
     "create_realtime_agent",
+    # Optimized Voice Core (Mac M2)
+    "MicStream",
+    "AudioOutput",
+    "AudioIOConfig",
+    "MockMicStream",
+    "FasterWhisperSTT",
+    "WhisperCppBackend",
+    "STTBackendConfig",
+    "create_stt",
+    "PiperTTS",
+    "XTTSTTS",
+    "TTSBackendConfig",
+    "create_tts",
+    "EchoReasoner",
+    "LLMReasoner",
+    "NeuralReasoner",
+    "ReasonerConfig",
+    "create_reasoner",
+    "RealtimeDuplex",
+    "DuplexConfig",
 ]
 
 

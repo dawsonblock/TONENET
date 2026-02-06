@@ -1,0 +1,30 @@
+# ToneNet Configuration
+# Optimized for Mac M2 with accuracy-first settings
+
+stt:
+  engine: faster_whisper    # faster_whisper | whisper_cpp
+  model: large-v3-turbo     # large-v3 for max accuracy, large-v3-turbo for speed
+  compute: int8             # int8 (best for Mac CPU) | float16 | float32
+  beam: 1                   # 1 for speed, 5 for accuracy
+  language: en
+
+tts:
+  engine: piper             # piper | kokoro | xtts
+  voice: en_US-lessac-medium
+  xtts_speaker_wav: null    # path to speaker wav for XTTS cloning
+  xtts_language: en
+
+vad:
+  engine: silero            # silero | webrtc
+  threshold: 0.5
+  min_silence_ms: 700
+  pre_roll_ms: 400
+
+audio:
+  sample_rate: 16000
+  block_ms: 20
+
+pipeline:
+  realtime: true
+  max_utterance_sec: 18
+  min_utterance_sec: 0.25
