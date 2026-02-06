@@ -53,6 +53,13 @@ from .identity import IdentityGuard, VoiceMorpher, SpeakerProfile, SpeakerEmbedd
 from .mesh import AudioMeshNode, MeshCoordinator, MeshMessage, MeshPeer
 from .improve import SelfImprovingSystem, AdaptiveVoiceAgent, QualityEstimator, OnlineAdapter
 
+# Duplex pipeline
+from .vad import VADSegmenter, UtteranceSegment, SimulatedVADSegmenter
+from .stt_whisper import WhisperSTT, STTConfig, MockWhisperSTT, get_stt as get_whisper_stt
+from .tts_xtts import XTTSEngine, TTSConfig, XTTSVoice, MockXTTSEngine, get_tts as get_xtts
+from .ledger import JsonlLedger, sha256_bytes, replay_print
+from .duplex_runner import DuplexRunner, run_duplex, Turn
+
 __all__ = [
     # Core
     "ToneNetCodec",
@@ -135,6 +142,25 @@ __all__ = [
     "ClassicalController",
     "export_model",
     "verify_model",
+    # Duplex Pipeline
+    "VADSegmenter",
+    "UtteranceSegment",
+    "SimulatedVADSegmenter",
+    "WhisperSTT",
+    "STTConfig",
+    "MockWhisperSTT",
+    "get_whisper_stt",
+    "XTTSEngine",
+    "TTSConfig",
+    "XTTSVoice",
+    "MockXTTSEngine",
+    "get_xtts",
+    "JsonlLedger",
+    "sha256_bytes",
+    "replay_print",
+    "DuplexRunner",
+    "run_duplex",
+    "Turn",
 ]
 
 
