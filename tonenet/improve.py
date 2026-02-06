@@ -8,10 +8,8 @@ Closed-loop system that:
 - Optimizes for perceptual quality
 """
 
-import json
 import time
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Callable, Tuple
+from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 import torch
 import torch.nn as nn

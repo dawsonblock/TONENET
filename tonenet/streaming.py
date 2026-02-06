@@ -11,7 +11,7 @@ Codes from the codec are List[Tensor[B,T]], one per quantizer.
 import torch
 from typing import Optional, List, Union
 from .codec import ToneNetCodec
-from .tokens import normalize_codes, get_code_info
+from .tokens import normalize_codes
 
 
 class StreamingToneNet:

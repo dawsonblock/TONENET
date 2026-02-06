@@ -6,8 +6,7 @@ Provides real-time audio capture chunked for the codec's expected format.
 
 import queue
 import threading
-from typing import Iterator, Optional, Callable
-import numpy as np
+from typing import Iterator, Optional
 import torch
 
 
