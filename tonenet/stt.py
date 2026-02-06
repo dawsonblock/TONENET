@@ -7,7 +7,7 @@ Install: pip install faster-whisper
 """
 
 import torch
-from typing import Optional, List, Iterator, Union
+from typing import Iterator
 from dataclasses import dataclass
 
 
@@ -52,7 +52,7 @@ class StreamingSTT:
         self._compute_type = compute_type
         
         # Buffer for streaming
-        self._buffer: List[torch.Tensor] = []
+        self._buffer: list[torch.Tensor] = []
         self._sample_rate = 16000  # Whisper expects 16kHz
     
     def _load_model(self):
@@ -80,7 +80,7 @@ class StreamingSTT:
         self,
         audio: torch.Tensor,
         return_segments: bool = False
-    ) -> Union[str, List[TranscriptSegment]]:
+    ) -> str | list[TranscriptSegment]:
         """
         Transcribe audio to text.
         
