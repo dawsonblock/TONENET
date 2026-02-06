@@ -39,6 +39,13 @@ from .replay import save_trace, replay_trace, TraceRecorder
 from .token_lm import TokenLanguageModel, StreamingLM
 from .orchestrator import AudioOrchestrator, AudioPolicy, AudioLedger
 
+# Advanced agent modules
+from .planner import VoiceAgentPlanner, BasePlannerLLM, LocalPlannerLLM, APIPlannerLLM
+from .memory import SemanticMemoryGraph, CrossModalMemory, MemoryNode
+from .identity import IdentityGuard, VoiceMorpher, SpeakerProfile, SpeakerEmbedder
+from .mesh import AudioMeshNode, MeshCoordinator, MeshMessage, MeshPeer
+from .improve import SelfImprovingSystem, AdaptiveVoiceAgent, QualityEstimator, OnlineAdapter
+
 __all__ = [
     # Core
     "ToneNetCodec",
@@ -74,6 +81,30 @@ __all__ = [
     "AudioOrchestrator",
     "AudioPolicy",
     "AudioLedger",
+    # Planner
+    "VoiceAgentPlanner",
+    "BasePlannerLLM",
+    "LocalPlannerLLM",
+    "APIPlannerLLM",
+    # Memory
+    "SemanticMemoryGraph",
+    "CrossModalMemory",
+    "MemoryNode",
+    # Identity
+    "IdentityGuard",
+    "VoiceMorpher",
+    "SpeakerProfile",
+    "SpeakerEmbedder",
+    # Mesh
+    "AudioMeshNode",
+    "MeshCoordinator",
+    "MeshMessage",
+    "MeshPeer",
+    # Self-Improving
+    "SelfImprovingSystem",
+    "AdaptiveVoiceAgent",
+    "QualityEstimator",
+    "OnlineAdapter",
     # Training/Deployment
     "ToneNetTrainer",
     "ToneNetDeployment",
@@ -81,4 +112,5 @@ __all__ = [
     "export_model",
     "verify_model",
 ]
+
 
