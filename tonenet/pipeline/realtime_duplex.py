@@ -88,9 +88,11 @@ class RealtimeDuplex:
         audio_output=None,
         cfg: DuplexConfig | None = None,
         mock: bool = False,
+        on_transcript=None,
     ):
         self.cfg = cfg or DuplexConfig()
         self.block_size = int(self.cfg.sample_rate * self.cfg.block_ms / 1000)
+        self.on_transcript = on_transcript
 
         # Components
         if mock:
@@ -205,6 +207,8 @@ class RealtimeDuplex:
             text = (text or "").strip()
 
             if text:
+                if self.on_transcript:
+                    self.on_transcript("user", text)
                 try:
                     self.q_text.put(text, timeout=0.1)
                 except queue.Full:
@@ -226,6 +230,9 @@ class RealtimeDuplex:
             reply = self.reasoner.respond(text)
             if not reply:
                 continue
+
+            if self.on_transcript:
+                self.on_transcript("agent", reply)
 
             # Synthesize
             audio, sr = self.tts.synthesize(reply)
