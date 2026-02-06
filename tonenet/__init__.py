@@ -37,9 +37,14 @@ from .streaming import StreamingToneNet
 from .watermark import embed_watermark, detect_watermark, verify_watermark
 from .replay import save_trace, replay_trace, TraceRecorder
 from .token_lm import TokenLanguageModel, StreamingLM
-from .orchestrator import AudioOrchestrator, AudioPolicy, AudioLedger
+from .orchestrator import AudioOrchestrator as LegacyOrchestrator, AudioPolicy, AudioLedger
 from .tokens import pack_codes, unpack_codes, normalize_codes, get_code_info
 from .mic_stream import MicStream, SimulatedMicStream
+
+# STT/TTS integration
+from .stt import StreamingSTT, MockSTT, get_stt
+from .tts import StreamingTTS, MockTTS, get_tts
+from .orchestrator_api import AudioOrchestrator, create_orchestrator
 
 # Advanced agent modules
 from .planner import VoiceAgentPlanner, BasePlannerLLM, LocalPlannerLLM, APIPlannerLLM
@@ -115,6 +120,15 @@ __all__ = [
     # Microphone
     "MicStream",
     "SimulatedMicStream",
+    # STT/TTS
+    "StreamingSTT",
+    "MockSTT",
+    "get_stt",
+    "StreamingTTS",
+    "MockTTS",
+    "get_tts",
+    "create_orchestrator",
+    "LegacyOrchestrator",
     # Training/Deployment
     "ToneNetTrainer",
     "ToneNetDeployment",
