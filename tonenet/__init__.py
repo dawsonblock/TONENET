@@ -60,6 +60,13 @@ from .tts_xtts import XTTSEngine, TTSConfig, XTTSVoice, MockXTTSEngine, get_tts 
 from .ledger import JsonlLedger, sha256_bytes, replay_print
 from .duplex_runner import DuplexRunner, run_duplex, Turn
 
+# Enhanced real-time pipeline
+from .stt_whispercpp import WhisperCppSTT, WhisperCppConfig, MockWhisperCppSTT, get_whispercpp_stt
+from .vad_webrtc import WebRTCVADGate, WebRTCVADConfig, MockWebRTCVAD
+from .text_chunker import sentence_chunks, split_text_to_sentences
+from .audio_player import AudioPlayer
+from .realtime_agent import RealtimeVoiceAgent, RealtimeAgentConfig, create_realtime_agent
+
 __all__ = [
     # Core
     "ToneNetCodec",
@@ -161,6 +168,20 @@ __all__ = [
     "DuplexRunner",
     "run_duplex",
     "Turn",
+    # Enhanced Real-Time Pipeline
+    "WhisperCppSTT",
+    "WhisperCppConfig",
+    "MockWhisperCppSTT",
+    "get_whispercpp_stt",
+    "WebRTCVADGate",
+    "WebRTCVADConfig",
+    "MockWebRTCVAD",
+    "sentence_chunks",
+    "split_text_to_sentences",
+    "AudioPlayer",
+    "RealtimeVoiceAgent",
+    "RealtimeAgentConfig",
+    "create_realtime_agent",
 ]
 
 
