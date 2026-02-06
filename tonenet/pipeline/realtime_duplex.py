@@ -24,7 +24,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .audio_io import MicStream, AudioOutput, AudioIOConfig, MockMicStream
+from .audio_io import MicStream, AudioOutput, AudioIOConfig, MockMicStream, MockAudioOutput
 from ..vad import VADSegmenter, SimulatedVADSegmenter
 from ..stt import create_stt, STTBackendConfig, MockSTTBackend
 from ..tts import create_tts, TTSBackendConfig, MockTTSBackend
@@ -84,7 +84,12 @@ class RealtimeDuplex:
             self.vad = vad or VADSegmenter()
             self.reasoner = reasoner or create_reasoner()
         
-        self.audio_out = audio_output or AudioOutput()
+        if audio_output:
+            self.audio_out = audio_output
+        elif mock:
+            self.audio_out = MockAudioOutput()
+        else:
+            self.audio_out = AudioOutput()
         self.mock = mock
         
         # Queues

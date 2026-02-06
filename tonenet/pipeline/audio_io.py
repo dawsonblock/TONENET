@@ -175,3 +175,27 @@ class MockMicStream:
         while self._count < self._max:
             self._count += 1
             yield np.zeros(blocksize, dtype=np.float32)
+
+
+class MockAudioOutput:
+    """Mock audio output for testing."""
+    
+    def __init__(self):
+        self._playing = False
+        self.is_playing = False
+    
+    def stop(self):
+        self._playing = False
+        self.is_playing = False
+    
+    def play(self, audio: np.ndarray, sample_rate: int | None = None, blocking: bool = True):
+        self.is_playing = True
+        if blocking:
+            import time
+            dur = len(audio) / (sample_rate or 24000)
+            # Simulate real-time if short, else fast-forward
+            if dur < 0.1:
+                time.sleep(dur)
+            else:
+                time.sleep(0.1)
+        self.is_playing = False
