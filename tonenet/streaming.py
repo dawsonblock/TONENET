@@ -43,7 +43,9 @@ class StreamingToneNet:
             seed: Random seed for deterministic output
             n_quantizers: Number of quantizer layers (default 8)
         """
-        self.codec = ToneNetCodec().to(device).eval()
+        self.codec = ToneNetCodec()
+        self.codec.to(device)
+        self.codec.eval()
         self.device = device
         self.frame_rate = frame_rate
         self.chunk_frames = chunk_frames
